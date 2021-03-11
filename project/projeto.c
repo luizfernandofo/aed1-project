@@ -11,23 +11,36 @@
             getchar();
 */
 
+
+//Variáveis globais
 bool sair = false;
 FILE* p;
 FILE* aux;
+funcionarios f;
 
-struct funcionarios{
-	char nome[200];
-	int codigo;
-	char cargo[20];
-	float salario;
-}f;
 
+void pause(){
+    printf("\nPressione ENTER para continuar...\n");
+    getchar();
+}
+
+//main()
+int main(int argc, char *argv[]){
+
+    while(!sair){
+        menu();
+    }
+    return 0;
+}
+
+
+//FUNÇÕES 
 void abrirArquivo(){
     p=fopen("t.txt", "a+b");
     aux=fopen("auxiliar.txt", "wb");
     if(p==NULL || aux == NULL){
         printf("Erro na abertura do arquivo\n");
-        system("pause");
+        pause();
         exit(1);
     }
 }
@@ -39,7 +52,7 @@ void cadastrar(){
     do{
         /*tell = ftell(p);
         printf("tell: %ld\n%d\n", tell,sizeof(f));     estava testando o retorno de ftell para usar o posicionador no arquivo
-        system("pause");*/
+        pause();*/
 
         system(CLS);
         printf("\n\n------------- CADASTRO DE FUNCIONARIOS -------------\n\n");
@@ -62,7 +75,7 @@ void cadastrar(){
     }while(c == 'S' || c == 's');
     fclose(p);
     fclose(aux);
-    system("pause");
+    pause();
 }
 
 void consultar(){
@@ -89,7 +102,7 @@ void consultar(){
     if(a==0) printf("\nFuncionario nao encontrado!\n\n");
     fclose(p);
     fclose(aux);
-    system("pause");
+    pause();
 
 }
 
@@ -105,7 +118,7 @@ void listar(){
     printf("\n");
     fclose(p);
     fclose(aux);
-    system("pause"); 
+    pause(); 
 }
 
 void alterarSalario(){
@@ -134,7 +147,7 @@ void alterarSalario(){
     fclose(aux);
     rename("auxiliar.txt","t.txt");
     remove("auxiliar.txt");
-    system("pause");
+    pause();
 }
 
 void alterarCargo(){
@@ -164,7 +177,7 @@ void alterarCargo(){
     fclose(aux);
     rename("auxiliar.txt","t.txt");
     remove("auxiliar.txt");
-    system("pause");
+    pause();
 }
 
 void demitir(){
@@ -192,7 +205,7 @@ void demitir(){
     fclose(aux);
     rename("auxiliar.txt","t.txt");
     remove("auxiliar.txt");
-    system("pause");
+    pause();
 }
 
 void menu(){
@@ -225,12 +238,4 @@ void menu(){
             scanf("%*c");
         break;
     }
-}
-
-int main(int argc, char *argv[]){
-
-    while(!sair){
-        menu();
-    }
-    return 0;
 }
