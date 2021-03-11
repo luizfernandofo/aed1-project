@@ -1,6 +1,15 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
+#include"projeto.h"
+
+/*TO DO:
+    *verificar a portabilidade do fflush para limpar o stdin;
+    *system("pause") nao funcionando no linux.
+        **Possivel soluçao: 
+            printf("Pressione ENTER para continuar...\n");
+            getchar();
+*/
 
 bool sair = false;
 FILE* p;
@@ -24,15 +33,15 @@ void abrirArquivo(){
 }
 
 void cadastrar(){
-    long int tell; //teste da posição
+    //long int tell; //teste da posição
 	char c;
     abrirArquivo();
     do{
-        tell = ftell(p);
-        printf("tell: %ld\n%d\n", tell,sizeof(f));
-        system("pause");
+        /*tell = ftell(p);
+        printf("tell: %ld\n%d\n", tell,sizeof(f));     estava testando o retorno de ftell para usar o posicionador no arquivo
+        system("pause");*/
 
-        system("cls");
+        system(CLS);
         printf("\n\n------------- CADASTRO DE FUNCIONARIOS -------------\n\n");
         printf("Codigo: ");
         scanf("%d",&f.codigo);
@@ -45,7 +54,6 @@ void cadastrar(){
         printf("Salario: ");
         fflush(stdin);
         scanf("%f",&f.salario);
-        fseek(p,SEEK_END, 1); //rever
         fflush(stdin);
         fwrite(&f,sizeof(f), 1, p);
         printf("\nCadastro realizado com sucesso...\n\n");
@@ -58,15 +66,15 @@ void cadastrar(){
 }
 
 void consultar(){
-    system("cls");
+    system(CLS);
     abrirArquivo();
     int cod;
     int a=0;
     printf("\n\n------------- CONSULTA DE FUNCIONARIOS -------------\n\n");
     printf("Informe o codigo a ser pesquisado: ");
     scanf("%d",&cod);
-    rewind(p);
-    //fseek(p, 0, SEEK_SET); //mudei
+    //rewind(p);             //
+    //fseek(p, 0, SEEK_SET); //ambos desempenham a mesma função, teoricamente.
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
@@ -86,31 +94,28 @@ void consultar(){
 }
 
 void listar(){
-    system("cls");
+    system(CLS);
     abrirArquivo();
-    rewind(p);
-    //fseek(p, SEEK_SET, 1);
     fread(&f, sizeof(f), 1, p);
     printf("\n\n------------- LISTA DE FUNCIONARIOS -------------\n\n");
     while(!feof(p)){
-        printf(" Nome: %s, Cargo: %s, Salario: R$ %.2f\n", f.nome, f.cargo, f.salario);
+        printf(" Codigo: %d, Nome: %s, Cargo: %s, Salario: R$ %.2f\n", f.codigo, f.nome, f.cargo, f.salario);
         fread(&f, sizeof(f), 1, p);
     }
     printf("\n");
     fclose(p);
     fclose(aux);
-    system("pause");
+    system("pause"); 
 }
 
 void alterarSalario(){
-    system("cls");
+    system(CLS);
     abrirArquivo();
     int cod;
     int a=0;
     printf("\n\n------------- ALTERAR SALARIO DE FUNCIONARIOS -------------\n\n");
     printf("Informe o funcionario a ter o salario alterado: ");
     scanf("%d",&cod);
-    //fseek(p, SEEK_SET, 1);
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
@@ -133,14 +138,13 @@ void alterarSalario(){
 }
 
 void alterarCargo(){
-    system("cls");
+    system(CLS);
     abrirArquivo();
     int cod;
     int a=0;
     printf("\n\n------------- ALTERAR CARGO DE FUNCIONARIOS -------------\n\n");
     printf("Informe o funcionario a ter o cargo alterado: ");
     scanf("%d",&cod);
-    fseek(p, SEEK_SET, 1);
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
@@ -164,14 +168,13 @@ void alterarCargo(){
 }
 
 void demitir(){
-    system("cls");
+    system(CLS);
     abrirArquivo();
     int cod;
     int a=0;
     printf("\n\n------------- DEMISSAO DE FUNCIONARIOS -------------\n\n");
     printf("Informe o funcionario a ser demitido: ");
     scanf("%d",&cod);
-    fseek(p, SEEK_SET, 1);
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
@@ -195,7 +198,7 @@ void demitir(){
 void menu(){
     int op;
     int c;
-    system("cls");
+    system(CLS);
     printf("\n ------------- GERENCIAMENTO DE FUNCIONARIOS -------------");
     printf("\n |                                                       |");
     printf("\n |  1 - Cadastrar funcionario                            |");
@@ -224,14 +227,8 @@ void menu(){
     }
 }
 
-int main(){
-    /*p = fopen("t.txt", "a+b");
-    if(p==NULL){
-        printf("Erro na abertura do arquivo\n");
-        system("pause");
-        exit(1);
-    }
-    fclose(p);*/
+int main(int argc, char *argv[]){
+
     while(!sair){
         menu();
     }
