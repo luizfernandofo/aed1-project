@@ -9,6 +9,7 @@
 
 #endif
 
+//strucs
 typedef struct{
 	char nome[200];
 	int codigo;
@@ -33,5 +34,7 @@ void alteraSalario();
 void alterarCargo();
 
 void demitir();
+
+void pause();
 
 #endif

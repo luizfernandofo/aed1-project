@@ -5,6 +5,7 @@
 
 /*TO DO:
     *verificar a portabilidade do fflush para limpar o stdin;
+
     *system("pause") nao funcionando no linux.
         **Possivel soluçao: 
             printf("Pressione ENTER para continuar...\n");
@@ -19,17 +20,13 @@ FILE* aux;
 funcionarios f;
 
 
-void pause(){
-    printf("\nPressione ENTER para continuar...\n");
-    getchar();
-}
-
 //main()
 int main(int argc, char *argv[]){
 
     while(!sair){
         menu();
     }
+    system(CLS);
     return 0;
 }
 
@@ -59,22 +56,24 @@ void cadastrar(){
         printf("Codigo: ");
         scanf("%d",&f.codigo);
         printf("Nome: ");
-        fflush(stdin);
+        setbuf(stdin, NULL);
         gets(f.nome);
         printf("Cargo: ");
-        fflush(stdin);
+        setbuf(stdin, NULL);
         gets(f.cargo);
         printf("Salario: ");
-        fflush(stdin);
+        setbuf(stdin, NULL);
         scanf("%f",&f.salario);
-        fflush(stdin);
+        setbuf(stdin, NULL);
         fwrite(&f,sizeof(f), 1, p);
         printf("\nCadastro realizado com sucesso...\n\n");
         printf("DESEJA CADASTRAR MAIS FUNCIONARIOS (s/n)?\n");
+        setbuf(stdin, NULL);
         scanf("%c", &c);
     }while(c == 'S' || c == 's');
     fclose(p);
     fclose(aux);
+    remove("auxiliar.txt");
     pause();
 }
 
@@ -102,6 +101,7 @@ void consultar(){
     if(a==0) printf("\nFuncionario nao encontrado!\n\n");
     fclose(p);
     fclose(aux);
+    remove("auxiliar.txt");
     pause();
 
 }
@@ -118,6 +118,7 @@ void listar(){
     printf("\n");
     fclose(p);
     fclose(aux);
+    remove("auxiliar.txt");
     pause(); 
 }
 
@@ -163,7 +164,7 @@ void alterarCargo(){
         if(f.codigo == cod){
             a++;
             printf("Informe o novo cargo: ");
-            fflush(stdin);
+            setbuf(stdin, NULL);
             gets(f.cargo);
         }
         fwrite(&f, sizeof(f),1,aux);
@@ -238,4 +239,10 @@ void menu(){
             scanf("%*c");
         break;
     }
+}
+
+void pause(){
+    setbuf(stdin, NULL);
+    printf("\nPressione ENTER para continuar...\n"); //não pode ter "lixo" no stdin para ela funcionar
+    getchar();
 }
