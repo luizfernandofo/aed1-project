@@ -5,29 +5,39 @@
 
 /*TO DO:
     *verificar a portabilidade do fflush para limpar o stdin;
+
     *system("pause") nao funcionando no linux.
         **Possivel soluçao: 
             printf("Pressione ENTER para continuar...\n");
             getchar();
 */
 
+
+//Variáveis globais
 bool sair = false;
 FILE* p;
 FILE* aux;
+funcionarios f;
 
-struct funcionarios{
-	char nome[200];
-	int codigo;
-	char cargo[20];
-	float salario;
-}f;
 
+//main()
+int main(int argc, char *argv[]){
+
+    while(!sair){
+        menu();
+    }
+    system(CLS);
+    return 0;
+}
+
+
+//FUNÇÕES 
 void abrirArquivo(){
     p=fopen("t.txt", "a+b");
     aux=fopen("auxiliar.txt", "wb");
     if(p==NULL || aux == NULL){
         printf("Erro na abertura do arquivo\n");
-        system("pause");
+        pause();
         exit(1);
     }
 }
@@ -39,30 +49,32 @@ void cadastrar(){
     do{
         /*tell = ftell(p);
         printf("tell: %ld\n%d\n", tell,sizeof(f));     estava testando o retorno de ftell para usar o posicionador no arquivo
-        system("pause");*/
+        pause();*/
 
         system(CLS);
         printf("\n\n------------- CADASTRO DE FUNCIONARIOS -------------\n\n");
         printf("Codigo: ");
         scanf("%d",&f.codigo);
         printf("Nome: ");
-        fflush(stdin);
+        setbuf(stdin, NULL);
         gets(f.nome);
         printf("Cargo: ");
-        fflush(stdin);
+        setbuf(stdin, NULL);
         gets(f.cargo);
         printf("Salario: ");
-        fflush(stdin);
+        setbuf(stdin, NULL);
         scanf("%f",&f.salario);
-        fflush(stdin);
+        setbuf(stdin, NULL);
         fwrite(&f,sizeof(f), 1, p);
         printf("\nCadastro realizado com sucesso...\n\n");
         printf("DESEJA CADASTRAR MAIS FUNCIONARIOS (s/n)?\n");
+        setbuf(stdin, NULL);
         scanf("%c", &c);
     }while(c == 'S' || c == 's');
     fclose(p);
     fclose(aux);
-    system("pause");
+    remove("auxiliar.txt");
+    pause();
 }
 
 void consultar(){
@@ -89,7 +101,8 @@ void consultar(){
     if(a==0) printf("\nFuncionario nao encontrado!\n\n");
     fclose(p);
     fclose(aux);
-    system("pause");
+    remove("auxiliar.txt");
+    pause();
 
 }
 
@@ -105,7 +118,8 @@ void listar(){
     printf("\n");
     fclose(p);
     fclose(aux);
-    system("pause"); 
+    remove("auxiliar.txt");
+    pause(); 
 }
 
 void alterarSalario(){
@@ -134,7 +148,7 @@ void alterarSalario(){
     fclose(aux);
     rename("auxiliar.txt","t.txt");
     remove("auxiliar.txt");
-    system("pause");
+    pause();
 }
 
 void alterarCargo(){
@@ -150,7 +164,7 @@ void alterarCargo(){
         if(f.codigo == cod){
             a++;
             printf("Informe o novo cargo: ");
-            fflush(stdin);
+            setbuf(stdin, NULL);
             gets(f.cargo);
         }
         fwrite(&f, sizeof(f),1,aux);
@@ -164,7 +178,7 @@ void alterarCargo(){
     fclose(aux);
     rename("auxiliar.txt","t.txt");
     remove("auxiliar.txt");
-    system("pause");
+    pause();
 }
 
 void demitir(){
@@ -192,7 +206,7 @@ void demitir(){
     fclose(aux);
     rename("auxiliar.txt","t.txt");
     remove("auxiliar.txt");
-    system("pause");
+    pause();
 }
 
 void menu(){
@@ -227,10 +241,8 @@ void menu(){
     }
 }
 
-int main(int argc, char *argv[]){
-
-    while(!sair){
-        menu();
-    }
-    return 0;
+void pause(){
+    setbuf(stdin, NULL);
+    printf("\nPressione ENTER para continuar...\n"); //não pode ter "lixo" no stdin para ela funcionar
+    getchar();
 }

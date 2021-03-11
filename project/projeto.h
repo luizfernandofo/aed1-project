@@ -9,6 +9,18 @@
 
 #endif
 
+//strucs
+typedef struct{
+	char nome[200];
+	int codigo;
+	char cargo[20];
+	float salario;
+}funcionarios;
+
+
+//Declaração das funções
+void menu();
+
 void abrirArquivo();
 
 void cadastrar();
@@ -22,5 +34,7 @@ void alteraSalario();
 void alterarCargo();
 
 void demitir();
+
+void pause();
 
 #endif
