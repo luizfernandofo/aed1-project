@@ -4,12 +4,11 @@
 #include"projeto.h"
 
 /*TO DO:
-    *verificar a portabilidade do fflush para limpar o stdin;
+    *Verificar a reescrita na modificaçao de infos
+    
+    *Ver a possibilidade de um buffer, de tamanho a definir, para armazenar os dados para listar();
 
-    *system("pause") nao funcionando no linux.
-        **Possivel soluçao: 
-            printf("Pressione ENTER para continuar...\n");
-            getchar();
+    *Incluir uma opção de confirmação de operação.
 */
 
 
@@ -33,8 +32,11 @@ int main(int argc, char *argv[]){
 
 //FUNÇÕES 
 void abrirArquivo(){
-    p=fopen("t.txt", "a+b");
+    p=fopen("t.txt", "r+b"); //mudei o parametro para rb+
     aux=fopen("auxiliar.txt", "wb");
+
+    if(p == NULL) p=fopen("t.txt", "w+b"); //como mudei o param caso o arquivo n exista ele vai retornar NULL, então IF verifica e cria o arquivo t.txt
+
     if(p==NULL || aux == NULL){
         printf("Erro na abertura do arquivo\n");
         pause();
@@ -43,14 +45,13 @@ void abrirArquivo(){
 }
 
 void cadastrar(){
-    //long int tell; //teste da posição
+    
 	char c;
     abrirArquivo();
-    do{
-        /*tell = ftell(p);
-        printf("tell: %ld\n%d\n", tell,sizeof(f));     estava testando o retorno de ftell para usar o posicionador no arquivo
-        pause();*/
 
+    fseek(p, 0, SEEK_END); //como a abertura é feita no modo "r+b" o "cursor" vai estar no começo, o FSEEK ent joga ele pro final para nao sobrescrever nada ao cadastrar um novo funcionário
+
+    do{
         system(CLS);
         printf("\n\n------------- CADASTRO DE FUNCIONARIOS -------------\n\n");
         printf("Codigo: ");
@@ -61,7 +62,7 @@ void cadastrar(){
         printf("Cargo: ");
         setbuf(stdin, NULL);
         gets(f.cargo);
-        printf("Salario: ");
+        printf("Salario: R$ ");
         setbuf(stdin, NULL);
         scanf("%f",&f.salario);
         setbuf(stdin, NULL);
@@ -86,7 +87,7 @@ void consultar(){
     printf("Informe o codigo a ser pesquisado: ");
     scanf("%d",&cod);
     //rewind(p);             //
-    //fseek(p, 0, SEEK_SET); //ambos desempenham a mesma função, teoricamente.
+    //fseek(p, 0, SEEK_SET); //Um FSEEK com esse params desempenha a mesma função q o REWIND, aparentemente.
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
@@ -110,7 +111,7 @@ void listar(){
     system(CLS);
     abrirArquivo();
     fread(&f, sizeof(f), 1, p);
-    printf("\n\n------------- LISTA DE FUNCIONARIOS -------------\n\n");
+    printf("\n\n------------------------- LISTA DE FUNCIONARIOS -------------------------\n\n");
     while(!feof(p)){
         printf(" Codigo: %d, Nome: %s, Cargo: %s, Salario: R$ %.2f\n", f.codigo, f.nome, f.cargo, f.salario);
         fread(&f, sizeof(f), 1, p);
@@ -123,6 +124,9 @@ void listar(){
 }
 
 void alterarSalario(){
+
+    long int pos_curr_empl; //teste da posição
+
     system(CLS);
     abrirArquivo();
     int cod;
@@ -133,20 +137,28 @@ void alterarSalario(){
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
+            pos_curr_empl = ftell(p); //pos1                                                                // Nesse bloco eu estava testando se o fseek() com um valor negativo
+            printf("ftell1: %d\nFseek return: %d\n", pos_curr_empl, fseek(p, sizeof(f)*(-1), SEEK_CUR));    // voltava para trás o ponteiro, fuciona. Supondo que o funcionario é logo o primeiro:
+            pos_curr_empl = ftell(p);                                                                       // pos1 = 228(tamanho de f em bytes), ou seja, o ponteiro está na frente
+            printf("ftell2: %d\n", pos_curr_empl);                                                          // chamando o fseek a partir da posição corrente e passando sizeof(f) negativo ele vai voltar a posição
             a++;
-            printf("\nInforme o novo salario: ");
+            printf("\n Codigo: %d\n Nome: %s\n Cargo: %s\n Salario: R$ %.2f\n", f.codigo, f.nome, f.cargo, f.salario);
+            printf("\nInforme o novo salario: R$ ");
             scanf("%f",&f.salario);
+
+            fwrite(&f, sizeof(f),1,p);
+            break;
         }
-        fwrite(&f, sizeof(f),1,aux);
+        //fwrite(&f, sizeof(f),1,aux);
         fread(&f, sizeof(f),1,p);
     }
     if(a==0) printf("\nFuncionario nao encontrado!\n\n");
     else printf("\nSalario alterado com sucesso!\n\n");
 
     fclose(p);
-    remove("t.txt");
+    //remove("t.txt");
     fclose(aux);
-    rename("auxiliar.txt","t.txt");
+    //rename("auxiliar.txt","t.txt");
     remove("auxiliar.txt");
     pause();
 }
@@ -163,20 +175,21 @@ void alterarCargo(){
     while(!feof(p)){
         if(f.codigo == cod){
             a++;
-            printf("Informe o novo cargo: ");
+            fseek(p, sizeof(f)*(-1), SEEK_CUR);
+            printf("\n Codigo: %d\n Nome: %s\n Cargo: %s\n Salario: R$ %.2f\n", f.codigo, f.nome, f.cargo, f.salario);
+            printf("\nInforme o novo cargo: ");
             setbuf(stdin, NULL);
             gets(f.cargo);
+            fwrite(&f, sizeof(f),1,p);
+            break;
         }
-        fwrite(&f, sizeof(f),1,aux);
         fread(&f, sizeof(f),1,p);
     }
     if(a==0) printf("\nFuncionario nao encontrado!\n\n");
     else printf("\nCargo alterado com sucesso!\n\n");
 
     fclose(p);
-    remove("t.txt");
     fclose(aux);
-    rename("auxiliar.txt","t.txt");
     remove("auxiliar.txt");
     pause();
 }
