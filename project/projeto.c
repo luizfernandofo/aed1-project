@@ -225,6 +225,7 @@ void demitir(){
 void menu(){
     int op;
     int c;
+    setbuf(stdin, NULL);
     system(CLS);
     printf("\n ------------- GERENCIAMENTO DE FUNCIONARIOS -------------");
     printf("\n |                                                       |");
@@ -237,7 +238,7 @@ void menu(){
     printf("\n |  0 - Sair                                             |");
     printf("\n ---------------------------------------------------------\n");
     printf("\n\n ESCOLHA UMA OPCAO: ");
-    scanf("%i",&op);
+    scanf("%d",&op);
 
     switch(op){
         case 1: cadastrar(); break;
@@ -248,8 +249,8 @@ void menu(){
         case 6: demitir(); break;
         case 0: sair = true; break;
         default:
-            printf("\nOpcao invalida! Pressione ENTER...");
-            scanf("%*c");
+            printf("\nOpcao invalida!\n");
+            pause();
         break;
     }
 }
