@@ -21,6 +21,8 @@ typedef struct{
 //Declaração das funções
 void menu();
 
+void fecharArquivo();
+
 void abrirArquivo();
 
 void cadastrar();

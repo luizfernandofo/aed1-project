@@ -14,8 +14,9 @@
 
 //Variáveis globais
 bool sair = false;
-FILE* p;
-FILE* aux;
+FILE* p=NULL;
+FILE* aux=NULL;
+FILE* freeCodes=NULL;
 funcionarios f;
 
 
@@ -34,14 +35,28 @@ int main(int argc, char *argv[]){
 void abrirArquivo(){
     p=fopen("t.txt", "r+b"); //mudei o parametro para rb+
     aux=fopen("auxiliar.txt", "wb");
+    freeCodes=fopen("freeCodes.txt", "r+b");
 
     if(p == NULL) p=fopen("t.txt", "w+b"); //como mudei o param caso o arquivo n exista ele vai retornar NULL, então IF verifica e cria o arquivo t.txt
+    if(freeCodes == NULL) freeCodes=fopen("freeCodes.txt", "w+b");
 
-    if(p==NULL || aux == NULL){
+    if(p==NULL || aux == NULL || freeCodes == NULL){
         printf("Erro na abertura do arquivo\n");
+        fecharArquivo();
         pause();
         exit(1);
     }
+
+    return;
+}
+
+void fecharArquivo(){
+    //caso criar um novo arquivo não esquecer de fechar ele aqui
+    fclose(p);
+    fclose(aux);
+    fclose(freeCodes);
+
+    return;
 }
 
 void cadastrar(){
@@ -72,22 +87,21 @@ void cadastrar(){
         setbuf(stdin, NULL);
         scanf("%c", &c);
     }while(c == 'S' || c == 's');
-    fclose(p);
-    fclose(aux);
+    
+    fecharArquivo();
     remove("auxiliar.txt");
     pause();
 }
 
 void consultar(){
-    system(CLS);
-    abrirArquivo();
     int cod;
     int a=0;
+
+    abrirArquivo();
+    system(CLS);
     printf("\n\n------------- CONSULTA DE FUNCIONARIOS -------------\n\n");
     printf("Informe o codigo a ser pesquisado: ");
     scanf("%d",&cod);
-    //rewind(p);             //
-    //fseek(p, 0, SEEK_SET); //Um FSEEK com esse params desempenha a mesma função q o REWIND, aparentemente.
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
@@ -100,8 +114,8 @@ void consultar(){
         fread(&f, sizeof(f), 1, p);
     }
     if(a==0) printf("\nFuncionario nao encontrado!\n\n");
-    fclose(p);
-    fclose(aux);
+    
+    fecharArquivo();
     remove("auxiliar.txt");
     pause();
 
@@ -117,16 +131,13 @@ void listar(){
         fread(&f, sizeof(f), 1, p);
     }
     printf("\n");
-    fclose(p);
-    fclose(aux);
+    
+    fecharArquivo();
     remove("auxiliar.txt");
     pause(); 
 }
 
 void alterarSalario(){
-
-    long int pos_curr_empl; //teste da posição
-
     system(CLS);
     abrirArquivo();
     int cod;
@@ -137,10 +148,6 @@ void alterarSalario(){
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
-            pos_curr_empl = ftell(p); //pos1                                                                // Nesse bloco eu estava testando se o fseek() com um valor negativo
-            printf("ftell1: %d\nFseek return: %d\n", pos_curr_empl, fseek(p, sizeof(f)*(-1), SEEK_CUR));    // voltava para trás o ponteiro, fuciona. Supondo que o funcionario é logo o primeiro:
-            pos_curr_empl = ftell(p);                                                                       // pos1 = 228(tamanho de f em bytes), ou seja, o ponteiro está na frente
-            printf("ftell2: %d\n", pos_curr_empl);                                                          // chamando o fseek a partir da posição corrente e passando sizeof(f) negativo ele vai voltar a posição
             a++;
             printf("\n Codigo: %d\n Nome: %s\n Cargo: %s\n Salario: R$ %.2f\n", f.codigo, f.nome, f.cargo, f.salario);
             printf("\nInforme o novo salario: R$ ");
@@ -149,16 +156,12 @@ void alterarSalario(){
             fwrite(&f, sizeof(f),1,p);
             break;
         }
-        //fwrite(&f, sizeof(f),1,aux);
         fread(&f, sizeof(f),1,p);
     }
     if(a==0) printf("\nFuncionario nao encontrado!\n\n");
     else printf("\nSalario alterado com sucesso!\n\n");
 
-    fclose(p);
-    //remove("t.txt");
-    fclose(aux);
-    //rename("auxiliar.txt","t.txt");
+    fecharArquivo();
     remove("auxiliar.txt");
     pause();
 }
@@ -188,8 +191,7 @@ void alterarCargo(){
     if(a==0) printf("\nFuncionario nao encontrado!\n\n");
     else printf("\nCargo alterado com sucesso!\n\n");
 
-    fclose(p);
-    fclose(aux);
+    fecharArquivo();
     remove("auxiliar.txt");
     pause();
 }
@@ -214,9 +216,9 @@ void demitir(){
     }
     if(a==0) printf("\nFuncionario nao encontrado!\n\n");
     else printf("\nFuncionario demitido com sucesso!\n\n");
-    fclose(p);
+
+    fecharArquivo();
     remove("t.txt");
-    fclose(aux);
     rename("auxiliar.txt","t.txt");
     remove("auxiliar.txt");
     pause();
@@ -225,6 +227,7 @@ void demitir(){
 void menu(){
     int op;
     int c;
+    setbuf(stdin, NULL);
     system(CLS);
     printf("\n ------------- GERENCIAMENTO DE FUNCIONARIOS -------------");
     printf("\n |                                                       |");
@@ -237,7 +240,7 @@ void menu(){
     printf("\n |  0 - Sair                                             |");
     printf("\n ---------------------------------------------------------\n");
     printf("\n\n ESCOLHA UMA OPCAO: ");
-    scanf("%i",&op);
+    scanf("%d",&op);
 
     switch(op){
         case 1: cadastrar(); break;
@@ -248,8 +251,8 @@ void menu(){
         case 6: demitir(); break;
         case 0: sair = true; break;
         default:
-            printf("\nOpcao invalida! Pressione ENTER...");
-            scanf("%*c");
+            printf("\nOpcao invalida!\n");
+            pause();
         break;
     }
 }
