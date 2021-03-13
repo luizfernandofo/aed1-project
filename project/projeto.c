@@ -14,8 +14,8 @@
 
 //Variáveis globais
 bool sair = false;
-FILE* p;
-FILE* aux;
+FILE* p=NULL;
+FILE* aux=NULL;
 funcionarios f;
 
 
@@ -259,4 +259,5 @@ void pause(){
     setbuf(stdin, NULL);
     printf("\nPressione ENTER para continuar...\n"); //não pode ter "lixo" no stdin para ela funcionar
     getchar();
+    setbuf(stdin, NULL);
 }
