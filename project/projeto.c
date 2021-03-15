@@ -1,6 +1,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdbool.h>
+#include<string.h>
+#include<time.h>
 #include"projeto.h"
 
 /*TO DO:
@@ -16,9 +18,14 @@
 bool sair = false;
 FILE* p=NULL;
 FILE* aux=NULL;
-FILE* freeCodes=NULL;
+FILE* availableCodes=NULL;
+FILE* fired=NULL;
 funcionarios f;
 
+int avCode=0; //serve para armazenar f.codigo dos func deletados
+
+struct tm *timeinfo;
+char date[10+1]; //dd/mm/aaaa
 
 //main()
 int main(int argc, char *argv[]){
@@ -27,20 +34,23 @@ int main(int argc, char *argv[]){
         menu();
     }
     system(CLS);
+    remove("auxiliar.txt"); 
     return 0;
 }
 
 
 //FUNÇÕES 
 void abrirArquivo(){
-    p=fopen("t.txt", "r+b"); //mudei o parametro para rb+
+    p=fopen("funcionarios.txt", "r+b");
     aux=fopen("auxiliar.txt", "wb");
-    freeCodes=fopen("freeCodes.txt", "r+b");
+    availableCodes=fopen("availableCodes.txt", "r+b");
+    fired=fopen("fired.txt", "r+b");
 
-    if(p == NULL) p=fopen("t.txt", "w+b"); //como mudei o param caso o arquivo n exista ele vai retornar NULL, então IF verifica e cria o arquivo t.txt
-    if(freeCodes == NULL) freeCodes=fopen("freeCodes.txt", "w+b");
+    if(p == NULL) p=fopen("funcionarios.txt", "w+b"); //caso o arquivo n exista ele vai retornar NULL, então IF verifica e cria o arquivo funcionarios.txt
+    if(availableCodes == NULL) availableCodes=fopen("availableCodes.txt", "w+b");//
+    if(fired == NULL) fired=fopen("fired.txt", "w+b"); //caso o arquivo n exista ele vai retornar NULL, então IF verifica e cria o arquivo funcionarios.txt
 
-    if(p==NULL || aux == NULL || freeCodes == NULL){
+    if(p==NULL || aux == NULL || availableCodes == NULL || fired==NULL){
         printf("Erro na abertura do arquivo\n");
         fecharArquivo();
         pause();
@@ -54,23 +64,42 @@ void fecharArquivo(){
     //caso criar um novo arquivo não esquecer de fechar ele aqui
     fclose(p);
     fclose(aux);
-    fclose(freeCodes);
+    fclose(availableCodes);
+    fclose(fired);
 
     return;
 }
 
 void cadastrar(){
     
+    long int tempCode; 
 	char c;
-    abrirArquivo();
-
-    fseek(p, 0, SEEK_END); //como a abertura é feita no modo "r+b" o "cursor" vai estar no começo, o FSEEK ent joga ele pro final para nao sobrescrever nada ao cadastrar um novo funcionário
 
     do{
+        avCode=0; //setado 0 para comparar lá embaixo caso não haja números disponíveis
+
+        abrirArquivo();
         system(CLS);
         printf("\n\n------------- CADASTRO DE FUNCIONARIOS -------------\n\n");
-        printf("Codigo: ");
-        scanf("%d",&f.codigo);
+
+        fread(&avCode, sizeof(avCode), 1, availableCodes);
+        if(avCode <= 0){ //caso não haja nenhum codigo de funcionario deletado pendente 
+
+            fseek(p, 0, SEEK_END); 
+            tempCode = ftell(p);
+            
+            if(tempCode == 0) f.codigo = 1;
+            else{
+                tempCode /= sizeof(f);
+                f.codigo = tempCode+1;
+            }
+
+        }else{ //Se houver algum codigo de funcionario deletado pendente f.codigo recebe
+            f.codigo = avCode;
+            fseek(p, sizeof(f)*(avCode-1), SEEK_SET); //o cursor do arquivo principal é setado para a posição onde, no arquivo principal, o índice avCode está zerado
+        }
+
+        printf("Codigo: %d\n", f.codigo);
         printf("Nome: ");
         setbuf(stdin, NULL);
         gets(f.nome);
@@ -81,11 +110,48 @@ void cadastrar(){
         setbuf(stdin, NULL);
         scanf("%f",&f.salario);
         setbuf(stdin, NULL);
-        fwrite(&f,sizeof(f), 1, p);
-        printf("\nCadastro realizado com sucesso...\n\n");
-        printf("DESEJA CADASTRAR MAIS FUNCIONARIOS (s/n)?\n");
+        time(&(f.rawtime)); //pega a data do cadastro
+
+        printf("\nCONFIRMA O CADASTRO DO FUNCIONARIO (s/n)? ");
         setbuf(stdin, NULL);
         scanf("%c", &c);
+
+        if(c == 'n' || c == 'N'){ //caso não confirma os arquivos são simplesmente fechados
+
+            fecharArquivo();
+            printf("\nCadastro nao realizado!\n\n");
+        
+        }else{ //caso confirme: se o codigo do "func" tiver origem de um deletado, avCode vai ser diferente de 0. Caso o arquivo de funcionários disponíveis esteja vazio avCode=0;
+
+            if(avCode != 0){ //o código utilizado do "available.txt" é apagado
+
+                fread(&avCode, sizeof(avCode), 1, availableCodes);
+                while(!feof(availableCodes)){
+                    fwrite(&avCode, sizeof(avCode), 1, aux);
+                    fread(&avCode, sizeof(avCode), 1, availableCodes);
+                }
+
+            }
+
+            fclose(aux);
+            fclose(availableCodes);
+            remove("availableCodes.txt");
+            rename("auxiliar.txt","availableCodes.txt");
+            //=====
+
+            fwrite(&f,sizeof(f), 1, p); //é feita a escrita do funcionario cadastrado no arquivo.
+
+            fecharArquivo(); //e os arquivos são fechados
+
+            
+            printf("\nCadastro realizado com sucesso!\n\n");
+
+        }
+        
+        printf("DESEJA CADASTRAR MAIS FUNCIONARIOS (s/n)? ");
+        setbuf(stdin, NULL);
+        scanf("%c", &c);
+
     }while(c == 'S' || c == 's');
     
     fecharArquivo();
@@ -127,7 +193,7 @@ void listar(){
     fread(&f, sizeof(f), 1, p);
     printf("\n\n------------------------- LISTA DE FUNCIONARIOS -------------------------\n\n");
     while(!feof(p)){
-        printf(" Codigo: %d, Nome: %s, Cargo: %s, Salario: R$ %.2f\n", f.codigo, f.nome, f.cargo, f.salario);
+        if(f.codigo!=0)printf(" Codigo: %d, Nome: %s, Cargo: %s, Salario: R$ %.2f, Admissao: %s\n", f.codigo, f.nome, f.cargo, f.salario, tmTOstring());
         fread(&f, sizeof(f), 1, p);
     }
     printf("\n");
@@ -138,17 +204,24 @@ void listar(){
 }
 
 void alterarSalario(){
-    system(CLS);
-    abrirArquivo();
     int cod;
     int a=0;
+
+    abrirArquivo();
+
+    system(CLS);
     printf("\n\n------------- ALTERAR SALARIO DE FUNCIONARIOS -------------\n\n");
     printf("Informe o funcionario a ter o salario alterado: ");
     scanf("%d",&cod);
+
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
             a++;
+
+            fseek(p, sizeof(f)*(-1), SEEK_CUR); 
+
+            setbuf(stdin, NULL);
             printf("\n Codigo: %d\n Nome: %s\n Cargo: %s\n Salario: R$ %.2f\n", f.codigo, f.nome, f.cargo, f.salario);
             printf("\nInforme o novo salario: R$ ");
             scanf("%f",&f.salario);
@@ -197,10 +270,15 @@ void alterarCargo(){
 }
 
 void demitir(){
-    system(CLS);
-    abrirArquivo();
     int cod;
     int a=0;
+
+    system(CLS);
+
+    abrirArquivo();
+    fseek(availableCodes, 0, SEEK_END);
+    fseek(fired, 0, SEEK_END);
+
     printf("\n\n------------- DEMISSAO DE FUNCIONARIOS -------------\n\n");
     printf("Informe o funcionario a ser demitido: ");
     scanf("%d",&cod);
@@ -208,9 +286,18 @@ void demitir(){
     while(!feof(p)){
         if(f.codigo == cod){
             a++;
-        }
-        else{
-            fwrite(&f, sizeof(f),1,aux);
+
+            
+            fwrite(&f.codigo, sizeof(f.codigo), 1, availableCodes); //o código do func deletado é escrito no arquivo available.txt
+
+            time(&(f.rawtime)); // é pego a data da demissao
+            fwrite(&f, sizeof(f), 1, fired);//o funcionario é escrito no arquivo de fired.txt
+
+            fseek(p, sizeof(f)*(-1), SEEK_CUR); //faz com que o cursor seja reposicionado para a sobrescrita, já que ele passou 1 casa devido a leitura anterior
+            memset(&f, 0, sizeof(f)); // f é zerado 
+            fwrite(&f, sizeof(f),1,p); //e sobrescreve no arquivo principal
+            
+            break; //interrompe o laço para evitar continuar no loop de forma desnecessária
         }
         fread(&f, sizeof(f),1,p);
     }
@@ -218,9 +305,6 @@ void demitir(){
     else printf("\nFuncionario demitido com sucesso!\n\n");
 
     fecharArquivo();
-    remove("t.txt");
-    rename("auxiliar.txt","t.txt");
-    remove("auxiliar.txt");
     pause();
 }
 
@@ -237,6 +321,71 @@ void menu(){
     printf("\n |  4 - Alterar salario de funcionario                   |");
     printf("\n |  5 - Alterar cargo de funcionario                     |");
     printf("\n |  6 - Demitir funcionario                              |");
+    printf("\n |  7 - Listar funcionarios demitidos                    |");
+    printf("\n |  0 - Sair                                             |");
+    printf("\n ---------------------------------------------------------\n");
+    printf("\n\n ESCOLHA UMA OPCAO: ");
+    scanf("%d",&op);
+
+    switch(op){
+        case 1: cadastrar(); break;
+        case 2: listar(); break;
+        case 3: consultar(); break;
+        case 4: alterarSalario(); break;
+        case 5: alterarCargo(); break;
+        case 6: demitir(); break;
+        case 7: listar_demitidos(); break;
+        case 0: sair = true; break;
+        default:
+            printf("\nOpcao invalida!\n");
+            pause();
+        break;
+    }
+}
+
+void pause(){
+    setbuf(stdin, NULL);
+    printf("\nPressione ENTER para continuar...\n"); //não pode ter "lixo" no stdin para ela funcionar
+    getchar();
+}
+
+char *tmTOstring(){
+
+    timeinfo = localtime(&(f.rawtime));
+    sprintf(date, "%d/%d/%d", timeinfo->tm_mday, ((timeinfo->tm_mon)+1), ((timeinfo->tm_year)+1900));
+    timeinfo = NULL;
+    
+  return date;
+}
+
+void listar_demitidos(){
+ 
+    abrirArquivo();
+    
+    system(CLS);
+    printf("\n\n------------------------- LISTA DE FUNCIONARIOS DEMITIDOS-------------------------\n\n");
+    fread(&f, sizeof(f), 1, fired);
+    while(!feof(fired)){
+        printf(" Codigo: %d, Nome: %s, Cargo: %s, Salario: R$ %.2f, Demissao: %s\n", f.codigo, f.nome, f.cargo, f.salario, tmTOstring());
+        fread(&f, sizeof(f), 1, fired);
+    }
+    printf("\n");
+    
+    fecharArquivo();
+    remove("auxiliar.txt");
+    pause(); 
+}
+/*
+void menu(){
+    int op;
+    int c;
+    setbuf(stdin, NULL);
+    system(CLS);
+    printf("\n ------------- GERENCIAMENTO DE FUNCIONARIOS -------------");
+    printf("\n |                                                       |");
+    printf("\n |  1 - Cadastrar funcionario                            |");
+    printf("\n |  2 - Consultar funcionarios                           |");
+    printf("\n |  3 - Consultar funcionarios antigos                   |");
     printf("\n |  0 - Sair                                             |");
     printf("\n ---------------------------------------------------------\n");
     printf("\n\n ESCOLHA UMA OPCAO: ");
@@ -256,9 +405,4 @@ void menu(){
         break;
     }
 }
-
-void pause(){
-    setbuf(stdin, NULL);
-    printf("\nPressione ENTER para continuar...\n"); //não pode ter "lixo" no stdin para ela funcionar
-    getchar();
-}
+*/
