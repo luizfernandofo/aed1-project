@@ -5,12 +5,15 @@
 #include<time.h>
 #include"projeto.h"
 
+#define BUFF_PAGE 10 //tamanho do vetor que vai armazenar os funcionarios que serão exibidos na página 
+
 /*TO DO:
-    *Verificar a reescrita na modificaçao de infos
     
     *Ver a possibilidade de um buffer, de tamanho a definir, para armazenar os dados para listar();
 
     *Incluir uma opção de confirmação de operação.
+
+    *Criar função para alimentar o buffer page
 */
 
 
@@ -20,10 +23,10 @@ FILE* p=NULL;
 FILE* aux=NULL;
 FILE* availableCodes=NULL;
 FILE* fired=NULL;
-funcionarios f;
+funcionarios f, fpage[BUFF_PAGE];
 
 struct tm *timeinfo;
-char date[10+1]; //dd/mm/aaaa
+char date[10+1]; // dd/mm/aaaa
 
 //main()
 int main(int argc, char *argv[]){
@@ -191,11 +194,12 @@ void listar(){
     abrirArquivo();
     fread(&f, sizeof(f), 1, p);
     printf("\n\n------------------------- LISTA DE FUNCIONARIOS -------------------------\n\n");
+    printf("     Codigo  |  Nome\n");
     while(!feof(p)){
-        if(f.codigo!=0)printf(" Codigo: %d, Nome: %s, Cargo: %s, Salario: R$ %.2f, Admissao: %s\n", f.codigo, f.nome, f.cargo, f.salario, tmTOstring());
+        //if(f.codigo!=0)printf(" Nome: %s\n Codigo: %d\n Cargo: %s\n Salario: R$ %.2f\n Admissao: %s\n\n", f.nome, f.codigo, f.cargo, f.salario, tmTOstring());
+        printf(" %10d  |  %s\n", f.codigo, f.nome);
         fread(&f, sizeof(f), 1, p);
     }
-    printf("\n");
     
     fecharArquivo();
     remove("auxiliar.txt");
@@ -293,7 +297,7 @@ void demitir(){
             fwrite(&f, sizeof(f), 1, fired);//o funcionario é escrito no arquivo de fired.txt
 
             fseek(p, sizeof(f)*(-1), SEEK_CUR); //faz com que o cursor seja reposicionado para a sobrescrita, já que ele passou 1 casa devido a leitura anterior
-            memset(&f, 0, sizeof(f)); // f é zerado 
+            memset(&f, 0, sizeof(f)); // f é zerado
             fwrite(&f, sizeof(f),1,p); //e sobrescreve no arquivo principal
             
             break; //interrompe o laço para evitar continuar no loop de forma desnecessária
