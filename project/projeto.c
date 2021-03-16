@@ -22,8 +22,6 @@ FILE* availableCodes=NULL;
 FILE* fired=NULL;
 funcionarios f;
 
-int avCode=0; //serve para armazenar f.codigo dos func deletados
-
 struct tm *timeinfo;
 char date[10+1]; //dd/mm/aaaa
 
@@ -72,6 +70,7 @@ void fecharArquivo(){
 
 void cadastrar(){
     
+    int avCode=0; //serve para armazenar f.codigo dos func deletados
     long int tempCode; 
 	char c;
 
@@ -305,6 +304,7 @@ void demitir(){
     else printf("\nFuncionario demitido com sucesso!\n\n");
 
     fecharArquivo();
+    sortAvailableCodes();
     pause();
 }
 
@@ -375,6 +375,7 @@ void listar_demitidos(){
     remove("auxiliar.txt");
     pause(); 
 }
+
 /*
 void menu(){
     int op;
@@ -406,3 +407,61 @@ void menu(){
     }
 }
 */
+
+void sortAvailableCodes(){
+
+    int *av=NULL; //vetor para armazenar os valores: ordenação interna
+    int i, j; //contadores
+    long int qtAvailable; //pega o retorno do ftell para saber a qtd de elementos no arquivo
+    int temp;
+
+    availableCodes=fopen("availableCodes.txt", "r+b");
+    if(availableCodes == NULL) return;
+    
+    fseek(availableCodes, 0, SEEK_END);     //reseta a posição do arquivo para o fim
+    qtAvailable = ftell(availableCodes);    //pega a quantidade de bytes no arquivo
+    qtAvailable /= sizeof(f.codigo);        //divide pelo tamanho de f.codigo e acha a quantidade de f.codigos
+
+    if(qtAvailable > 1){
+
+        av = (int *) malloc(sizeof(f.codigo)*qtAvailable); //aloca mem para todos os elementos a serem ordenados
+        if(av == NULL){
+            printf("Falha ao alocar memoria para ordenacao do arquivo de codigos de funcionarios disponiveis.\n");
+
+            fclose(availableCodes);
+
+            exit(EXIT_FAILURE);
+        }
+
+        fseek(availableCodes, 0, SEEK_SET); //reseta a posição do arquivo para o começo
+        fread(av, sizeof(f.codigo), qtAvailable, availableCodes); //lê todos os elementos do arquivo
+
+        fclose(availableCodes); //fecha o arquivo para prevenir que ele seja corrompido caso haja algum "crash" durante a ordenação
+
+        for(i=0; i<qtAvailable; i++)            //ordenação
+            for(j=i+1; j<qtAvailable; j++){     //
+                if(av[j] < av[i]){              //
+                    temp = av[j];               //
+                    av[j] = av[i];              //
+                    av[i] = temp;               //
+                }
+            }
+
+        availableCodes=fopen("availableCodes.txt", "r+b"); //abre o arquivo novamente
+        if(availableCodes == NULL){
+            printf("Falha na abertura do arquivo 'availableCodes.txt'\n");
+
+            free(av);
+
+            exit(EXIT_FAILURE);
+        }
+
+        fwrite(av, sizeof(f.codigo), qtAvailable, availableCodes); //sobrescreve todos os elementos do arquivo pelos do vetor já ordenados
+
+    }
+    
+    free(av); 
+    fclose(availableCodes);
+
+    return;
+}

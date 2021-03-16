@@ -51,4 +51,6 @@ char *tmTOstring();
 
 void listar_demitidos();
 
+void sortAvailableCodes();
+
 #endif
