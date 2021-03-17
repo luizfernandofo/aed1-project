@@ -32,13 +32,13 @@ void cadastrar();
 
 void listar();
 
-void consultar();
+void consultar(int cod);
 
-void alterarSalario();
+void alterarSalario(int cod);
 
-void alterarCargo();
+void alterarCargo(int cod);
 
-void demitir();
+void demitir(int cod);
 
 void pause();
 
@@ -52,5 +52,9 @@ char *tmTOstring();
 void listar_demitidos();
 
 void sortAvailableCodes();
+
+int loadFuncBuff(int n);
+
+int readFCode();
 
 #endif

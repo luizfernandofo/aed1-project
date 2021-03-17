@@ -30,48 +30,6 @@ funcionarios f, fpage[BUFF_PAGE];
 struct tm *timeinfo;
 char date[10+1]; // dd/mm/aaaa
 
-int loadFuncBuff(int n){
-
-    FILE *tempF=NULL;
-    long int qtAvailable; //pega o retorno do ftell para saber a qtd de elementos no arquivo
-    int i=0;
-
-    float pgQt;
-
-    memset(fpage, 0, sizeof(fpage));
-
-    tempF=fopen("funcionarios.txt", "r+b");
-    if(tempF == NULL) return 1;
-
-    fseek(tempF, 0, SEEK_END);
-    qtAvailable = ftell(tempF);
-
-    if(qtAvailable == 0) return 1;
-
-    fseek(tempF, (n-1)*BUFF_PAGE*sizeof(f), SEEK_SET);
-
-    while(i<BUFF_PAGE && !feof(tempF)){
-        fread(&fpage[i], sizeof(f), 1, tempF);
-        if(fpage[i].codigo != 0) i++;
-    }
-
-    fclose(tempF);
-
-    tempF=fopen("availableCodes.txt", "r+b");
-    if(tempF != NULL){
-
-        fseek(tempF, 0, SEEK_END);
-        qtAvailable -= (ftell(tempF)/sizeof(f.codigo))*sizeof(f);
-        fclose(tempF);
-
-    }
-
-    pgQt = (double)qtAvailable/(BUFF_PAGE*sizeof(f));
-
-    pgQt = ceil(pgQt);
-
-    return (int) pgQt;
-}
 
 //main()
 int main(int argc, char *argv[]){
@@ -208,15 +166,17 @@ void cadastrar(){
     pause();
 }
 
-void consultar(){
-    int cod;
+void consultar(int cod){
+    
     int a=0;
+
+    if(cod==0) return;
 
     abrirArquivo();
     system(CLS);
     printf("\n\n------------- CONSULTA DE FUNCIONARIOS -------------\n\n");
-    printf("Informe o codigo a ser pesquisado: ");
-    scanf("%d",&cod);
+    /*printf("Informe o codigo a ser pesquisado: ");
+    scanf("%d",&cod);*/
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
@@ -239,7 +199,7 @@ void consultar(){
 void listar(){
     int i;
     int op;
-    int pgNumber = 1, pgQt=1;
+    int pgNumber = 1, pgQt;
     bool sairListar = false;
 
     while(!sairListar){
@@ -268,6 +228,7 @@ void listar(){
 
         switch(op){
             case 1:
+
                 printf(" Pagina: ");
                 setbuf(stdin, NULL);
                 scanf("%d", &pgNumber);
@@ -277,12 +238,12 @@ void listar(){
                     pgNumber = 1;
                     pause();
                 }
-
                 break;
-            case 2: consultar(); break;
-            case 3: alterarSalario(); break;
-            case 4: alterarCargo(); break;
-            case 5: demitir(); break;
+
+            case 2: consultar( readFCode() ); break;
+            case 3: alterarSalario( readFCode() ); break;
+            case 4: alterarCargo( readFCode() ); break;
+            case 5: demitir( readFCode() ); break;
             case 0: sairListar = true; break;
             default:
                 printf("\nOpcao invalida!\n");
@@ -293,16 +254,18 @@ void listar(){
     } 
 }
 
-void alterarSalario(){
-    int cod;
+void alterarSalario(int cod){
+    //int cod;
     int a=0;
+
+    if(cod==0) return;
 
     abrirArquivo();
 
     system(CLS);
     printf("\n\n------------- ALTERAR SALARIO DE FUNCIONARIOS -------------\n\n");
-    printf("Informe o funcionario a ter o salario alterado: ");
-    scanf("%d",&cod);
+    /*printf("Informe o funcionario a ter o salario alterado: ");
+    scanf("%d",&cod);*/
 
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
@@ -329,14 +292,19 @@ void alterarSalario(){
     pause();
 }
 
-void alterarCargo(){
-    system(CLS);
-    abrirArquivo();
-    int cod;
+void alterarCargo(int cod){
+
+    //int cod;
     int a=0;
+
+    if(cod==0) return;
+
+    abrirArquivo();
+
+    system(CLS);
     printf("\n\n------------- ALTERAR CARGO DE FUNCIONARIOS -------------\n\n");
-    printf("Informe o funcionario a ter o cargo alterado: ");
-    scanf("%d",&cod);
+    /*printf("Informe o funcionario a ter o cargo alterado: ");
+    scanf("%d",&cod);*/
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
@@ -359,9 +327,11 @@ void alterarCargo(){
     pause();
 }
 
-void demitir(){
-    int cod;
+void demitir(int cod){
+    //int cod;
     int a=0;
+
+    if(cod==0) return;
 
     system(CLS);
 
@@ -370,8 +340,8 @@ void demitir(){
     fseek(fired, 0, SEEK_END);
 
     printf("\n\n------------- DEMISSAO DE FUNCIONARIOS -------------\n\n");
-    printf("Informe o funcionario a ser demitido: ");
-    scanf("%d",&cod);
+    /*printf("Informe o funcionario a ser demitido: ");
+    scanf("%d",&cod);*/
     fread(&f, sizeof(f), 1, p);
     while(!feof(p)){
         if(f.codigo == cod){
@@ -429,7 +399,7 @@ void menu(){
 
 void pause(){
     setbuf(stdin, NULL);
-    printf("\nPressione ENTER para continuar...\n"); //não pode ter "lixo" no stdin para ela funcionar
+    printf("\n Pressione ENTER para continuar..."); //não pode ter "lixo" no stdin para ela funcionar
     getchar();
 }
 
@@ -459,38 +429,6 @@ void listar_demitidos(){
     remove("auxiliar.txt");
     pause(); 
 }
-
-/*
-void menu(){
-    int op;
-    int c;
-    setbuf(stdin, NULL);
-    system(CLS);
-    printf("\n ------------- GERENCIAMENTO DE FUNCIONARIOS -------------");
-    printf("\n |                                                       |");
-    printf("\n |  1 - Cadastrar funcionario                            |");
-    printf("\n |  2 - Consultar funcionarios                           |");
-    printf("\n |  3 - Consultar funcionarios antigos                   |");
-    printf("\n |  0 - Sair                                             |");
-    printf("\n ---------------------------------------------------------\n");
-    printf("\n\n ESCOLHA UMA OPCAO: ");
-    scanf("%d",&op);
-
-    switch(op){
-        case 1: cadastrar(); break;
-        case 2: listar(); break;
-        case 3: consultar(); break;
-        case 4: alterarSalario(); break;
-        case 5: alterarCargo(); break;
-        case 6: demitir(); break;
-        case 0: sair = true; break;
-        default:
-            printf("\nOpcao invalida!\n");
-            pause();
-        break;
-    }
-}
-*/
 
 void sortAvailableCodes(){
 
@@ -550,3 +488,61 @@ void sortAvailableCodes(){
     return;
 }
 
+int loadFuncBuff(int n){
+
+    FILE *tempF=NULL;
+    long int qtAvailable; //pega o retorno do ftell para saber a qtd de elementos no arquivo
+    int i=0;
+
+    float pgQt;
+
+    memset(fpage, 0, sizeof(fpage));
+
+    tempF=fopen("funcionarios.txt", "r+b");
+    if(tempF == NULL) return 1;
+
+    fseek(tempF, 0, SEEK_END);
+    qtAvailable = ftell(tempF);
+
+    if(qtAvailable == 0) return 1;
+
+    fseek(tempF, (n-1)*BUFF_PAGE*sizeof(f), SEEK_SET);
+
+    while(i<BUFF_PAGE && !feof(tempF)){
+        fread(&fpage[i], sizeof(f), 1, tempF);
+        if(fpage[i].codigo != 0) i++;
+    }
+
+    fclose(tempF);
+
+    tempF=fopen("availableCodes.txt", "r+b");
+    if(tempF != NULL){
+
+        fseek(tempF, 0, SEEK_END);
+        qtAvailable -= (ftell(tempF)/sizeof(f.codigo))*sizeof(f);
+        fclose(tempF);
+
+    }
+
+    pgQt = (double)qtAvailable/(BUFF_PAGE*sizeof(f));
+
+    pgQt = ceil(pgQt);
+
+    return (int) pgQt;
+}
+
+int readFCode(){
+
+    int fCode;
+
+    printf(" Codigo do funcionario ou digite 0 para cancelar: ");
+
+    setbuf(stdin, NULL);
+
+    scanf("%d", &fCode);
+    
+    if(fCode < 1) return 0;
+
+    return fCode;
+
+}
