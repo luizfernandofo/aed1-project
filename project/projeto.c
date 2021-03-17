@@ -3,6 +3,7 @@
 #include<stdbool.h>
 #include<string.h>
 #include<time.h>
+#include<math.h>
 #include"projeto.h"
 
 #define BUFF_PAGE 10 //tamanho do vetor que vai armazenar os funcionarios que serão exibidos na página 
@@ -25,11 +26,57 @@ FILE* availableCodes=NULL;
 FILE* fired=NULL;
 funcionarios f, fpage[BUFF_PAGE];
 
+
 struct tm *timeinfo;
 char date[10+1]; // dd/mm/aaaa
 
+int loadFuncBuff(int n){
+
+    FILE *tempF=NULL;
+    long int qtAvailable; //pega o retorno do ftell para saber a qtd de elementos no arquivo
+    int i=0;
+
+    float pgQt;
+
+    memset(fpage, 0, sizeof(fpage));
+
+    tempF=fopen("funcionarios.txt", "r+b");
+    if(tempF == NULL) return 1;
+
+    fseek(tempF, 0, SEEK_END);
+    qtAvailable = ftell(tempF);
+
+    if(qtAvailable == 0) return 1;
+
+    fseek(tempF, (n-1)*BUFF_PAGE*sizeof(f), SEEK_SET);
+
+    while(i<BUFF_PAGE && !feof(tempF)){
+        fread(&fpage[i], sizeof(f), 1, tempF);
+        if(fpage[i].codigo != 0) i++;
+    }
+
+    fclose(tempF);
+
+    tempF=fopen("availableCodes.txt", "r+b");
+    if(tempF != NULL){
+
+        fseek(tempF, 0, SEEK_END);
+        qtAvailable -= (ftell(tempF)/sizeof(f.codigo))*sizeof(f);
+        fclose(tempF);
+
+    }
+
+    pgQt = (double)qtAvailable/(BUFF_PAGE*sizeof(f));
+
+    pgQt = ceil(pgQt);
+
+    return (int) pgQt;
+}
+
 //main()
 int main(int argc, char *argv[]){
+
+    memset(fpage, 0, sizeof(fpage));
 
     while(!sair){
         menu();
@@ -190,20 +237,60 @@ void consultar(){
 }
 
 void listar(){
-    system(CLS);
-    abrirArquivo();
-    fread(&f, sizeof(f), 1, p);
-    printf("\n\n------------------------- LISTA DE FUNCIONARIOS -------------------------\n\n");
-    printf("     Codigo  |  Nome\n");
-    while(!feof(p)){
-        //if(f.codigo!=0)printf(" Nome: %s\n Codigo: %d\n Cargo: %s\n Salario: R$ %.2f\n Admissao: %s\n\n", f.nome, f.codigo, f.cargo, f.salario, tmTOstring());
-        printf(" %10d  |  %s\n", f.codigo, f.nome);
-        fread(&f, sizeof(f), 1, p);
-    }
-    
-    fecharArquivo();
-    remove("auxiliar.txt");
-    pause(); 
+    int i;
+    int op;
+    int pgNumber = 1, pgQt=1;
+    bool sairListar = false;
+
+    while(!sairListar){
+
+        pgQt = loadFuncBuff(pgNumber);
+
+        system(CLS);
+        printf("\n\n------------------------- LISTA DE FUNCIONARIOS ------------------------- Page: %d/%d\n\n", pgNumber, pgQt);
+        printf("     Codigo  |  Nome\n");
+
+        for(i=0; i<BUFF_PAGE; i++) if(fpage[i].codigo!=0) printf(" %10d  |  %s\n", fpage[i].codigo, fpage[i].nome);
+          
+        printf("\n ------------------------- OPCOES -------------------------");
+        printf("\n |                                                        |");
+        printf("\n |  1 - Ir para pagina:                                   |");
+        printf("\n |  2 - Consultar funcionario                             |");
+        printf("\n |  3 - Alterar salario de funcionario                    |");
+        printf("\n |  4 - Alterar cargo de funcionario                      |");
+        printf("\n |  5 - Demitir funcionario                               |");
+        printf("\n |  0 - Voltar                                            |");
+        printf("\n ---------------------------------------------------------\n");
+        printf("\n ESCOLHA UMA OPCAO: ");
+
+        setbuf(stdin, NULL);
+        scanf("%d",&op);
+
+        switch(op){
+            case 1:
+                printf(" Pagina: ");
+                setbuf(stdin, NULL);
+                scanf("%d", &pgNumber);
+
+                if(pgNumber < 1 || pgNumber > pgQt){
+                    printf(" Pagina informada nao existe!\n");
+                    pgNumber = 1;
+                    pause();
+                }
+
+                break;
+            case 2: consultar(); break;
+            case 3: alterarSalario(); break;
+            case 4: alterarCargo(); break;
+            case 5: demitir(); break;
+            case 0: sairListar = true; break;
+            default:
+                printf("\nOpcao invalida!\n");
+                pause();
+            break;
+        }
+
+    } 
 }
 
 void alterarSalario(){
@@ -313,19 +400,16 @@ void demitir(){
 }
 
 void menu(){
+
     int op;
-    int c;
+
     setbuf(stdin, NULL);
     system(CLS);
     printf("\n ------------- GERENCIAMENTO DE FUNCIONARIOS -------------");
     printf("\n |                                                       |");
     printf("\n |  1 - Cadastrar funcionario                            |");
     printf("\n |  2 - Listar funcionarios                              |");
-    printf("\n |  3 - Consultar funcionario                            |");
-    printf("\n |  4 - Alterar salario de funcionario                   |");
-    printf("\n |  5 - Alterar cargo de funcionario                     |");
-    printf("\n |  6 - Demitir funcionario                              |");
-    printf("\n |  7 - Listar funcionarios demitidos                    |");
+    printf("\n |  3 - Listar funcionarios demitidos                    |");
     printf("\n |  0 - Sair                                             |");
     printf("\n ---------------------------------------------------------\n");
     printf("\n\n ESCOLHA UMA OPCAO: ");
@@ -334,11 +418,7 @@ void menu(){
     switch(op){
         case 1: cadastrar(); break;
         case 2: listar(); break;
-        case 3: consultar(); break;
-        case 4: alterarSalario(); break;
-        case 5: alterarCargo(); break;
-        case 6: demitir(); break;
-        case 7: listar_demitidos(); break;
+        case 3: listar_demitidos(); break;
         case 0: sair = true; break;
         default:
             printf("\nOpcao invalida!\n");
@@ -469,3 +549,4 @@ void sortAvailableCodes(){
 
     return;
 }
+

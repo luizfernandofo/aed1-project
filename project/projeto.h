@@ -12,9 +12,9 @@
 //strucs
 typedef struct{
 
-	char nome[200];
+	char nome[70];
 	int codigo;
-	char cargo[20];
+	char cargo[70];
 	float salario;
 	time_t rawtime;
 
@@ -34,7 +34,7 @@ void listar();
 
 void consultar();
 
-void alteraSalario();
+void alterarSalario();
 
 void alterarCargo();
 
