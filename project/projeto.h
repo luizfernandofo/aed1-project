@@ -25,9 +25,7 @@ typedef struct{
 //Declaração das funções
 void menu();
 
-void fecharArquivo();
-
-void abrirArquivo();
+FILE * abrirArquivo(const char *filename, const char *mode);
 
 void cadastrar();
 
@@ -51,6 +49,8 @@ void pause();
 char *tmTOstring();
 
 void listar_demitidos();
+
+void cleanFiredList();
 
 void sortAvailableCodes();
 
