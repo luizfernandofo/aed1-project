@@ -8,14 +8,10 @@
 
 #define BUFF_PAGE 10 //tamanho do vetor que vai armazenar os funcionarios que serão exibidos na página 
 
-/*TO DO:
-
-    *Incluir uma opção de confirmação de operação nas funções.
-
-*/
-
-
+//===============================================================================
 //Variáveis globais
+//===============================================================================
+
 bool sair = false;
 FILE* employees=NULL;
 FILE* aux=NULL;
@@ -27,41 +23,25 @@ funcionarios f, fpage[BUFF_PAGE];
 struct tm *timeinfo;
 char date[10+1]; // dd/mm/aaaa
 
-
+//===============================================================================
 //main()
-int main(int argc, char *argv[]){
+//===============================================================================
 
+int main(int argc, char *argv[]){
+    
     memset(fpage, 0, sizeof(fpage));
 
     while(!sair){
         menu();
     }
     system(CLS);
-    //remove("auxiliar.txt"); 
+    
     return 0;
 }
 
-
-//FUNÇÕES 
-/*void abrirArquivo(){
-    p=fopen("funcionarios.txt", "r+b");
-    aux=fopen("auxiliar.txt", "wb");
-    availableCodes=fopen("availableCodes.txt", "r+b");
-    fired=fopen("fired.txt", "r+b");
-
-    if(p == NULL) p=fopen("funcionarios.txt", "w+b"); //caso o arquivo n exista ele vai retornar NULL, então IF verifica e cria o arquivo funcionarios.txt
-    if(availableCodes == NULL) availableCodes=fopen("availableCodes.txt", "w+b");//
-    if(fired == NULL) fired=fopen("fired.txt", "w+b"); //caso o arquivo n exista ele vai retornar NULL, então IF verifica e cria o arquivo funcionarios.txt
-
-    if(p==NULL || aux == NULL || availableCodes == NULL || fired==NULL){
-        printf("Erro na abertura do arquivo\n");
-        fecharArquivo();
-        pause();
-        exit(1);
-    }
-
-    return;
-}*/
+//===============================================================================
+//FUNÇÕES
+//===============================================================================
 
 FILE * abrirArquivo(const char *filename, const char *mode){
 
@@ -84,10 +64,9 @@ void cadastrar(){
     int avCode=0; //serve para armazenar f.codigo dos func deletados
     long int tempCode; 
 	char c;
-
     
-
     do{
+        
 
         system(CLS);
         printf("\n\n------------- CADASTRO DE FUNCIONARIOS -------------\n\n");
@@ -124,7 +103,21 @@ void cadastrar(){
         gets(f.cargo);
         printf("Salario: R$ ");
         setbuf(stdin, NULL);
-        scanf("%f",&f.salario);
+        if(scanf("%f",&f.salario) <= 0){// verifica se o scanf foi usado corretamente.
+
+            f.salario = 0; //salário "re-setado" para evitar erros.
+
+            system(CLS);
+
+            printf("Valor informado e invalido!\n");
+
+            pause();
+
+            setbuf(stdin, NULL);
+
+            continue;
+
+        }
         setbuf(stdin, NULL);
         time(&(f.rawtime)); //pega a data do cadastro
 
@@ -485,7 +478,7 @@ void menu(){
 void pause(){
 
     setbuf(stdin, NULL);
-    printf("\n Pressione ENTER para continuar..."); //não pode ter "lixo" no stdin para ela funcionar
+    printf("\nPressione ENTER para continuar..."); //não pode ter "lixo" no stdin para ela funcionar
     getchar();
 
     return;
@@ -650,7 +643,7 @@ int readFCode(){
 
     int fCode;
 
-    printf(" Codigo do funcionario ou digite 0 para cancelar: ");
+    printf("Codigo do funcionario ou digite 0 para cancelar: ");
 
     setbuf(stdin, NULL);
 
